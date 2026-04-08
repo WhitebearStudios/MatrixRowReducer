@@ -114,8 +114,9 @@ class Fraction{
             return numerator == other.numerator && denominator == other.denominator;
         }
         bool operator==(const int other){
-            //cout << decimal() << " == " << other << " " << (other == decimal()) << endl;
-            return other == decimal();
+            Fraction cpy = Fraction(numerator, denominator);
+            cpy.simplify();
+            return cpy.numerator == other && cpy.denominator == 1;
         }
         bool operator==(const double other){
             return other == decimal();
@@ -123,7 +124,18 @@ class Fraction{
         bool operator==(const float other){
             return other == decimal();
         }
-        
+        bool operator!=(const Fraction& other){
+            return !(*this == other);
+        }
+        bool operator!=(const int other){
+            return !(*this == other);
+        }
+        bool operator!=(const double other){
+            return other != decimal();
+        }
+        bool operator!=(const float other){
+            return other != decimal();
+        }
         
         
         void print(){
@@ -354,61 +366,54 @@ class MatrixSolver{
             if(showSteps) {cout << "\nSorted:"<<endl;
             matr.print();}
             
-            int r = 0;
-            while(r < matr.getNumRows()){
+            int c = 0;
+            for(int r=0; r<matr.getNumRows(); r++){
+                if(showSteps) cout << "At row: "<<r <<"\n\n";
                 
-                for(int c=0; c<matr.getNumCols(); c++){
-                    if(showSteps) cout << "New col: "<<c <<"\n\n";
-                    
-                    //cout << "Get entry at "<<r<<","<<c<<endl;
-                    Fraction thisEntry = matr.getEntry(r,c);
+                //cout << "Get entry at "<<r<<","<<c<<endl;
+                Fraction thisEntry = matr.getEntry(r,c);
+                
+                //Inrease c to get non-zero entry
+                while(thisEntry == 0 && c < matr.getNumCols()){
+                    c++;
+                    thisEntry = matr.getEntry(r,c);
+                }
+                if(c == matr.getNumCols()){
+                    cout << "All further rows are 0s"<<endl;
+                    break;
+                }
+                cout << "At col: "<<c<<endl;
 
-                    //If next entry is 0 go over a column
-                    if(thisEntry == 0){
-                        continue;
-                    }
+                
+                //scale leadng entry so 1
+                if(scaleRows){
+                    matr.scaleRow(thisEntry.reciprocal(), r);
                     
-                    //scale leadng entry so 1
-                    if(scaleRows){
-                        matr.scaleRow(thisEntry.reciprocal(), r);
-                        
-                        if(showSteps) {cout << "Scale row " << r << " to 1:" << endl;
-                        matr.print();}
-                    }
-                    
-                    //All done!
-                    if(r == matr.getNumRows() - 1) break;
-                    
-                    const int myRow = r;
-                    
-                    r++;
-                    //Turn entries below LE to 0s
-                    while(r < matr.getNumRows()){
-                        thisEntry = matr.getEntry(r,c);
-                        if(showSteps){cout << "Multiply row " << (myRow+1) << " by ";
-                        (-thisEntry / matr.getEntry(myRow,c)).print();
-                        cout << " and add to row " << (r+1) << " to make col " << (c+1) << " a 0:" << endl;}
-                        
-                        matr.multAndAdd(myRow, -thisEntry / matr.getEntry(myRow,c), r);
-                        if(showSteps) matr.print();
-                        
-                        r++;
-                    }
-                    r = myRow+1;
+                    if(showSteps) {cout << "Scale row " << r << " to 1:" << endl;
+                    matr.print();}
                 }
                 
-                //Sort matrix to push cancelled rows to the bottom
-                matr.sort();
-                if(showSteps){cout << "\nSorted:"<<endl;
-                matr.print();}
+                int r2 = matr.getNumRows() - 1;
                 
-                //Go back to highest un-reduced row
-                for(int i=0; i<matr.getNumRows(); i++){
-                    r = i;
-                    if(!matr.reducedRows[r]) break;
-                    if(i == matr.getNumRows() - 1) r = matr.getNumRows(); //Exit
+                Fraction entryToCancelOthers = matr.getEntry(r,c);
+                
+                //Turn entries below LE to 0s
+                while(r2 > r){
+                    thisEntry = matr.getEntry(r2,c);
+                    if(showSteps){cout << "Multiply row " << (r+1) << " by ";
+                    (-thisEntry / entryToCancelOthers).print();
+                    cout << " and add to row " << (r2+1) << " to make col " << (c+1) << " a 0:" << endl;}
+                    
+                    matr.multAndAdd(r, -thisEntry / entryToCancelOthers, r2);
+                    if(showSteps) matr.print();
+                    
+                    //Sort to make sure funny cancellation doesn't break anything
+                    matr.sort();
+                    if(showSteps) {cout << "\nSorted:"<<endl;
+                    matr.print();}
+                    
+                    r2--;
                 }
-                if(showSteps) cout << "Next row: "<<r<<endl;
             }
         }
         
