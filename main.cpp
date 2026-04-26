@@ -375,8 +375,8 @@ class MatrixSolver{
                 
                 //Inrease c to get non-zero entry
                 while(thisEntry == 0 && c < matr.getNumCols()){
-                    c++;
                     thisEntry = matr.getEntry(r,c);
+                    c++;
                 }
                 if(c == matr.getNumCols()){
                     cout << "All further rows are 0s"<<endl;
