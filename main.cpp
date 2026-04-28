@@ -383,7 +383,7 @@ class MatrixSolver{
                     cout << "All further rows are 0s"<<endl;
                     break;
                 }
-                cout << "At col: "<<c<<endl;
+                if(showSteps) cout << "At col: "<<c<<endl;
 
                 
                 //scale leadng entry so 1
